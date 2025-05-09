@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Management System</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --bg-color: #f8f9fa;
+            --text-color: #333;
+            --card-bg: #fff;
+            --border-color: #ddd;
+        }
+
+        .dark-mode {
+            --primary-color: #2980b9;
+            --secondary-color: #27ae60;
+            --bg-color: #222;
+            --text-color: #f8f9fa;
+            --card-bg: #333;
+            --border-color: #444;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            padding-bottom: 60px;
+        }
+
+        .navbar {
+            background-color: var(--primary-color) !important;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-color: var(--border-color);
+            transition: transform 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-success {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .form-control, .form-select {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border-color: var(--border-color);
+        }
+
+        #loginPage, #registerPage, #productPage, #cartPage {
+            display: none;
+        }
+
+        .product-image {
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .language-selector {
+            cursor: pointer;
+        }
+
+        .cart-badge {
+            position: relative;
+            top: -10px;
+            right: 5px;
+            padding: 3px 6px;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .shake {
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="#" data-i18n="navBrand">Sales Management</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item" id="productsNavItem" style="display: none;">
+                        <a class="nav-link" href="#" id="productsLink" data-i18n="navProducts">Products</a>
+                    </li>
+                    <li class="nav-item" id="cartNavItem" style="display: none;">
+                        <a class="nav-link" href="#" id="cartLink">
+                            <i class="fas fa-shopping-cart"></i> <span data-i18n="navCart">Cart</span>
+                            <span class="badge rounded-pill bg-danger cart-badge" id="cartCount">0</span>
+                        </a>
+                    </li>
+                </ul>
+                <div class="nav-item dropdown me-3">
+                    <a class="nav-link dropdown-toggle text-white" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-globe"></i> <span data-i18n="language">Language</span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item language-selector" data-lang="en" href="#">English</a></li>
+                        <li><a class="dropdown-item language-selector" data-lang="vi" href="#">Tiếng Việt</a></li>
+                    </ul>
+                </div>
+                <div class="form-check form-switch me-3">
+                    <input class="form-check-input" type="checkbox" id="darkModeSwitch">
+                    <label class="form-check-label text-white" for="darkModeSwitch"><i class="fas fa-moon"></i></label>
+                </div>
+                <div id="userInfo" style="display: none;">
+                    <span class="text-white me-2" id="userNameDisplay"></span>
+                    <button class="btn btn-outline-light btn-sm" id="logoutBtn" data-i18n="btnLogout">Logout</button>
+                </div>
+                <div id="authButtons">
+                    <button class="btn btn-outline-light me-2" id="loginBtn" data-i18n="btnLogin">Login</button>
+                    <button class="btn btn-light" id="registerBtn" data-i18n="btnRegister">Register</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Alert messages -->
+        <div id="alertContainer"></div>
+
+        <!-- Home Page -->
+        <div id="homePage" class="fade-in">
+            <div class="jumbotron text-center p-4 bg-light rounded">
+                <h1 class="display-4" data-i18n="homeTitle">Welcome to Sales Management System</h1>
+                <p class="lead" data-i18n="homeSubtitle">Manage your products and sales efficiently</p>
+                <hr class="my-4">
+                <p data-i18n="homeDescription">Please login or register to continue</p>
+            </div>
+        </div>
+
+        <!-- Login Page -->
+        <div id="loginPage" class="fade-in">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0" data-i18n="loginTitle">Login to Your Account</h4>
+                        </div>
+                        <div class="card-body">
+                            <form id="loginForm">
+                                <div class="mb-3">
+                                    <label for="loginEmail" class="form-label" data-i18n="labelEmail">Email</label>
+                                    <input type="email" class="form-control" id="loginEmail" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="loginPassword" class="form-label" data-i18n="labelPassword">Password</label>
+                                    <input type="password" class="form-control" id="loginPassword" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100" data-i18n="btnLoginSubmit">Login</button>
+                            </form>
+                        </div>
+                        <div class="card-footer text-center">
+                            <p class="mb-0">
+                                <span data-i18n="noAccount">Don't have an account?</span> 
+                                <a href="#" id="goToRegister" data-i18n="btnGoRegister">Register here</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Register Page -->
+        <div id="registerPage" class="fade-in">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0" data-i18n="registerTitle">Create an Account</h4>
+                        </div>
+                        <div class="card-body">
+                            <form id="registerForm">
+                                <div class="mb-3">
+                                    <label for="registerName" class="form-label" data-i18n="labelName">Full Name</label>
+                                    <input type="text" class="form-control" id="registerName" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="registerEmail" class="form-label" data-i18n="labelEmail">Email</label>
+                                    <input type="email" class="form-control" id="registerEmail" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="registerPassword" class="form-label" data-i18n="labelPassword">Password</label>
+                                    <input type="password" class="form-control" id="registerPassword" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="confirmPassword" class="form-label" data-i18n="labelConfirmPassword">Confirm Password</label>
+                                    <input type="password" class="form-control" id="confirmPassword" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100" data-i18n="btnRegisterSubmit">Register</button>
+                            </form>
+                        </div>
+                        <div class="card-footer text-center">
+                            <p class="mb-0">
+                                <span data-i18n="haveAccount">Already have an account?</span> 
+                                <a href="#" id="goToLogin" data-i18n="btnGoLogin">Login here</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Page -->
+        <div id="productPage" class="fade-in">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 data-i18n="productsTitle">Products</h2>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal" data-i18n="btnAddProduct">Add Product</button>
+            </div>
+            
+            <div class="row" id="productsList">
+                <div class="col-12 text-center">
+                    <div class="loader"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cart Page -->
+        <div id="cartPage" class="fade-in">
+            <h2 class="mb-4" data-i18n="cartTitle">Shopping Cart</h2>
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-body">
+                            <div id="cartItems">
+                                <p class="text-center" data-i18n="cartEmpty">Your cart is empty</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0" data-i18n="cartSummary">Order Summary</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-3">
+                                <span data-i18n="cartTotal">Total:</span>
+                                <span id="cartTotal">$0.00</span>
+                            </div>
+                            <button class="btn btn-success w-100" id="checkoutBtn" data-i18n="btnCheckout">Checkout</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Product Modal -->
+    <div class="modal fade" id="addProductModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="productModalTitle" data-i18n="modalAddProduct">Add New Product</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="productForm">
+                        <input type="hidden" id="productId">
+                        <div class="mb-3">
+                            <label for="productTitle" class="form-label" data-i18n="labelTitle">Title</label>
+                            <input type="text" class="form-control" id="productTitle" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="productDescription" class="form-label" data-i18n="labelDescription">Description</label>
+                            <textarea class="form-control" id="productDescription" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="productPrice" class="form-label" data-i18n="labelPrice">Price</label>
+                            <input type="number" class="form-control" id="productPrice" min="0" step="0.01" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="productImage" class="form-label" data-i18n="labelImage">Image URL</label>
+                            <input type="url" class="form-control" id="productImage" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="btnCancel">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveProductBtn" data-i18n="btnSave">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" data-i18n="modalConfirmDelete">Confirm Delete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p data-i18n="confirmDeleteText">Are you sure you want to delete this product?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="btnCancel">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn" data-i18n="btnDelete">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // API Configuration
+        const API_BASE_URL = 'https://6813713a129f6313e211454a.mockapi.io/api/v1/';
+        
+        // Translations
+        const translations = {
+            en: {
+                navBrand: "Sales Management",
+                navProducts: "Products",
+                navCart: "Cart",
+                language: "Language",
+                btnLogout: "Logout",
+                btnLogin: "Login",
+                btnRegister: "Register",
+                homeTitle: "Welcome to Sales Management System",
+                homeSubtitle: "Manage your products and sales efficiently",
+                homeDescription: "Please login or register to continue",
+                loginTitle: "Login to Your Account",
+                labelEmail: "Email",
+                labelPassword: "Password",
+                btnLoginSubmit: "Login",
+                noAccount: "Don't have an account?",
+                btnGoRegister: "Register here",
+                registerTitle: "Create an Account",
+                labelName: "Full Name",
+                labelConfirmPassword: "Confirm Password",
+                btnRegisterSubmit: "Register",
+                haveAccount: "Already have an account?",
+                btnGoLogin: "Login here",
+                productsTitle: "Products",
+                btnAddProduct: "Add Product",
+                cartTitle: "Shopping Cart",
+                cartEmpty: "Your cart is empty",
+                cartSummary: "Order Summary",
+                cartTotal: "Total:",
+                btnCheckout: "Checkout",
+                modalAddProduct: "Add New Product",
+                modalEditProduct: "Edit Product",
+                labelTitle: "Title",
+                labelDescription: "Description",
+                labelPrice: "Price",
+                labelImage: "Image URL",
+                btnCancel: "Cancel",
+                btnSave: "Save",
+                modalConfirmDelete: "Confirm Delete",
+                confirmDeleteText: "Are you sure you want to delete this product?",
+                btnDelete: "Delete",
+                btnAddToCart: "Add to Cart",
+                btnEdit: "Edit",
+                btnView: "View",
+                btnRemove: "Remove",
+                alertLoginSuccess: "Login successful!",
+                alertLoginFailed: "Login failed. Please check your credentials.",
+                alertRegisterSuccess: "Registration successful! Please login.",
+                alertRegisterFailed: "Registration failed. Email might already be in use.",
+                alertPasswordMismatch: "Passwords do not match!",
+                alertProductAdded: "Product added successfully!",
+                alertProductUpdated: "Product updated successfully!",
+                alertProductDeleted: "Product deleted successfully!",
+                alertAddedToCart: "Product added to cart!",
+                alertRemovedFromCart: "Product removed from cart!",
+                alertQuantityUpdated: "Quantity updated!",
+                alertCheckout: "Thank you for your purchase!",
+                createdAt: "Created at:",
+                quantity: "Quantity:",
+                price: "Price:"
+            },
+            vi: {
+                navBrand: "Quản lý Bán hàng",
+                navProducts: "Sản phẩm",
+                navCart: "Giỏ hàng",
+                language: "Ngôn ngữ",
+                btnLogout: "Đăng xuất",
+                btnLogin: "Đăng nhập",
+                btnRegister: "Đăng ký",
+                homeTitle: "Chào mừng đến với Hệ thống Quản lý Bán hàng",
+                homeSubtitle: "Quản lý sản phẩm và bán hàng hiệu quả",
+                homeDescription: "Vui lòng đăng nhập hoặc đăng ký để tiếp tục",
+                loginTitle: "Đăng nhập vào Tài khoản",
+                labelEmail: "Email",
+                labelPassword: "Mật khẩu",
+                btnLoginSubmit: "Đăng nhập",
+                noAccount: "Bạn chưa có tài khoản?",
+                btnGoRegister: "Đăng ký tại đây",
+                registerTitle: "Tạo Tài khoản Mới",
+                labelName: "Họ và Tên",
+                labelConfirmPassword: "Xác nhận Mật khẩu",
+                btnRegisterSubmit: "Đăng ký",
+                haveAccount: "Đã có tài khoản?",
+                btnGoLogin: "Đăng nhập tại đây",
+                productsTitle: "Sản phẩm",
+                btnAddProduct: "Thêm Sản phẩm",
+                cartTitle: "Giỏ hàng",
+                cartEmpty: "Giỏ hàng của bạn đang trống",
+                cartSummary: "Tóm tắt Đơn hàng",
+                cartTotal: "Tổng cộng:",
+                btnCheckout: "Thanh toán",
+                modalAddProduct: "Thêm Sản phẩm Mới",
+                modalEditProduct: "Sửa Sản phẩm",
+                labelTitle: "Tên sản phẩm",
+                labelDescription: "Mô tả",
+                labelPrice: "Giá",
+                labelImage: "URL Hình ảnh",
+                btnCancel: "Hủy",
+                btnSave: "Lưu",
+                modalConfirmDelete: "Xác nhận Xóa",
+                confirmDeleteText: "Bạn có chắc chắn muốn xóa sản phẩm này?",
+                btnDelete: "Xóa",
+                btnAddToCart: "Thêm vào giỏ",
+                btnEdit: "Sửa",
+                btnView: "Xem",
+                btnRemove: "Xóa",
+                alertLoginSuccess: "Đăng nhập thành công!",
+                alertLoginFailed: "Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập.",
+                alertRegisterSuccess: "Đăng ký thành công! Vui lòng đăng nhập.",
+                alertRegisterFailed: "Đăng ký thất bại. Email có thể đã được sử dụng.",
+                alertPasswordMismatch: "Mật khẩu không khớp!",
+                alertProductAdded: "Thêm sản phẩm thành công!",
+                alertProductUpdated: "Cập nhật sản phẩm thành công!",
+                alertProductDeleted: "Xóa sản phẩm thành công!",
+                alertAddedToCart: "Đã thêm sản phẩm vào giỏ hàng!",
+                alertRemovedFromCart: "Đã xóa sản phẩm khỏi giỏ hàng!",
+                alertQuantityUpdated: "Đã cập nhật số lượng!",
+                alertCheckout: "Cảm ơn bạn đã mua hàng!",
+                createdAt: "Ngày tạo:",
+                quantity: "Số lượng:",
+                price: "Giá:"
+            }
+        };
+
+        // Global variables
+        let currentUser = null;
+        let currentLanguage = 'en';
+        let productsData = [];
+        let productToDeleteId = null;
+
+        // Initialize dark mode from localStorage
+        function initializeDarkMode() {
+            const isDarkMode = localStorage.getItem('darkMode') === 'true';
+            if (isDarkMode) {
+                document.body.classList.add('dark-mode');
+                $('#darkModeSwitch').prop('checked', true);
+            }
+        }
+
+        // Apply translations
+        function applyTranslations(lang) {
+            $('[data-i18n]').each(function() {
+                const key = $(this).data('i18n');
+                if (translations[lang] && translations[lang][key]) {
+                    $(this).text(translations[lang][key]);
+                }
+            });
+            currentLanguage = lang;
+            localStorage.setItem('language', lang);
+        }
+
+        // Show alert message
+        function showAlert(message, type = 'success') {
+            const alertHtml = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            $('#alertContainer').html(alertHtml);
+            
+            // Auto close alert after 3 seconds
+            setTimeout(() => {
+                $('.alert').alert('close');
+            }, 3000);
+        }
+
+        // Change page view
+        function showPage(pageId) {
+            $('.fade-in').hide(); // Hide all pages
+            $(`#${pageId}`).show(); // Show the requested page
+            
+            // Update navigation based on page
+            if (pageId === 'productPage' || pageId === 'cartPage') {
+                $('#productsNavItem, #cartNavItem, #userInfo').show();
+                $('#authButtons').hide();
+            } else if (pageId === 'homePage' && !currentUser) {
+                $('#productsNavItem, #cartNavItem, #userInfo').hide();
+                $('#authButtons').show();
+            }
+        }
+
+        // Format date for display
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        }
+
+        // Users Management Functions
+        function registerUser(name, email, password) {
+            return $.ajax({
+                url: `${API_BASE_URL}/users`,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    name: name,
+                    email: email,
+                    password: password,
+                    createdAt: new Date().toISOString()
+                })
+            });
+        }
+
+        function loginUser(email, password) {
+            return $.ajax({
+                url: `${API_BASE_URL}/users`,
+                type: 'GET',
+                data: { email: email }
+            }).then(users => {
+                const user = users.find(u => u.email === email && u.password === password);
+                if (user) {
+                    return user;
+                } else {
+                    throw new Error('Invalid credentials');
+                }
+            });
+        }
+
+        // Products Management Functions
+        function getProducts() {
+            return $.ajax({
+                url: `${API_BASE_URL}/products`,
+                type: 'GET'
+            });
+        }
+
+        function addProduct(product) {
+            return $.ajax({
+                url: `${API_BASE_URL}/products`,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    ...product,
+                    createdAt: new Date().toISOString()
+                })
+            });
+        }
+
+        function updateProduct(id, product) {
+            return $.ajax({
+                url: `${API_BASE_URL}/products/${id}`,
+                type: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(product)
+            });
+        }
+
+        function deleteProduct(id) {
+            return $.ajax({
+                url: `${API_BASE_URL}/products/${id}`,
+                type: 'DELETE'
+            });
+        }
+
+        // Cart Management (using localStorage)
+        function getCart() {
+            const cart = localStorage.getItem('cart');
+            return cart ? JSON.parse(cart) : [];
+        }
+
+        function saveCart(cart) {
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartCount();
+        }
+
+        function addToCart(product, quantity = 1) {
+            const cart = getCart();
+            const existingItem = cart.find(item => item.id === product.id);
+            
+            if (existingItem) {
+                existingItem.quantity += quantity;
+            } else {
+                cart.push({
+                    id: product.id,
+                    title: product.title,
+                    price: product.price,
+                    image: product.image,
+                    quantity: quantity
+                });
+            }
+            
+            saveCart(cart);
+            showAlert(translations[currentLanguage].alertAddedToCart);
+        }
+
+        function removeFromCart(productId) {
+            const cart = getCart().filter(item => item.id !== productId);
+            saveCart(cart);
+            renderCart();
+            showAlert(translations[currentLanguage].alertRemovedFromCart);
+        }
+
+        function updateCartItemQuantity(productId, quantity) {
+            const cart = getCart();
+            const item = cart.find(item => item.id === productId);
+            
+            if (item) {
+                item.quantity = quantity;
+                if (item.quantity <= 0) {
+                    removeFromCart(productId);
+                } else {
+                    saveCart(cart);
+                    renderCart();
+                    showAlert(translations[currentLanguage].alertQuantityUpdated);
+                }
+            }
+        }
+
+        function updateCartCount() {
+            const cart = getCart();
+            const count = cart.reduce((total, item) => total + item.quantity, 0);
+            $('#cartCount').text(count);
+        }
+
+        function calculateTotal() {
+            const cart = getCart();
+            return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+        }
+
+        // Render Functions
+        function renderProducts() {
+            $('#productsList').html('<div class="col-12 text-center"><div class="loader"></div></div>');
+            
+            getProducts().then(products => {
+                productsData = products;
+                if (products.length === 0) {
+                    $('#productsList').html('<p class="text-center">No products available</p>');
+                    return;
+                }
+
+                let html = '';
+                products.forEach(product => {
+                    html += `
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <img src="${product.image}" class="card-img-top product-image" alt="${product.title}">
+                                <div class="card-body">
+                                    <h5 class="card-title">${product.title}</h5>
+                                    <p class="card-text">${product.description.length > 100 ? product.description.substring(0, 100) + '...' : product.description}</p>
+                                    <h5 class="text-primary">${parseFloat(product.price).toFixed(2)}</h5>
+                                    <p class="text-muted small"><span data-i18n="createdAt">Created at</span>: ${formatDate(product.createdAt)}</p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="d-flex justify-content-between">
+                                        <button class="btn btn-sm btn-primary add-to-cart" data-id="${product.id}">
+                                            <i class="fas fa-cart-plus"></i> <span data-i18n="btnAddToCart">Add to Cart</span>
+                                        </button>
+                                        <div>
+                                            <button class="btn btn-sm btn-warning edit-product" data-id="${product.id}">
+                                                <i class="fas fa-edit"></i> <span data-i18n="btnEdit">Edit</span>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger delete-product" data-id="${product.id}">
+                                                <i class="fas fa-trash"></i> <span data-i18n="btnRemove">Remove</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                $('#productsList').html(html);
+                applyTranslations(currentLanguage);
+            }).catch(error => {
+                console.error('Error loading products:', error);
+                $('#productsList').html('<p class="text-center text-danger">Error loading products</p>');
+            });
+        }
+
+        function renderCart() {
+            const cart = getCart();
+            
+            if (cart.length === 0) {
+                $('#cartItems').html(`<p class="text-center" data-i18n="cartEmpty">Your cart is empty</p>`);
+                $('#cartTotal').text('$0.00');
+                return;
+            }
+            
+            let html = '';
+            let total = 0;
+            
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                total += itemTotal;
+                
+                html += `
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-2">
+                                    <img src="${item.image}" class="img-fluid rounded" alt="${item.title}">
+                                </div>
+                                <div class="col-md-4">
+                                    <h5>${item.title}</h5>
+                                    <p class="text-primary">${parseFloat(item.price).toFixed(2)}</p>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="input-group">
+                                        <button class="btn btn-outline-secondary decrease-quantity" type="button" data-id="${item.id}">-</button>
+                                        <input type="number" class="form-control text-center quantity-input" value="${item.quantity}" min="1" data-id="${item.id}">
+                                        <button class="btn btn-outline-secondary increase-quantity" type="button" data-id="${item.id}">+</button>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <h6>${parseFloat(itemTotal).toFixed(2)}</h6>
+                                </div>
+                                <div class="col-md-1">
+                                    <button class="btn btn-sm btn-danger remove-from-cart" data-id="${item.id}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            $('#cartItems').html(html);
+            $('#cartTotal').text(' ' + parseFloat(total).toFixed(2));
+            applyTranslations(currentLanguage);
+        }
+
+        // Event handlers
+        $(document).ready(function() {
+            // Initialize
+            initializeDarkMode();
+            const savedLanguage = localStorage.getItem('language') || 'en';
+            applyTranslations(savedLanguage);
+            updateCartCount();
+            
+            // Check for logged in user
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                $('#userNameDisplay').text(currentUser.name);
+                $('#userInfo').show();
+                $('#authButtons').hide();
+                $('#productsNavItem, #cartNavItem').show();
+                showPage('productPage');
+                renderProducts();
+            } else {
+                $('#productsNavItem, #cartNavItem, #userInfo').hide();
+                $('#authButtons').show();
+                showPage('homePage');
+            }
+            
+            // Navigation
+            $('#loginBtn, #goToLogin').on('click', function(e) {
+                e.preventDefault();
+                showPage('loginPage');
+            });
+            
+            $('#registerBtn, #goToRegister').on('click', function(e) {
+                e.preventDefault();
+                showPage('registerPage');
+            });
+            
+            $('#productsLink').on('click', function(e) {
+                e.preventDefault();
+                showPage('productPage');
+                renderProducts();
+            });
+            
+            $('#cartLink').on('click', function(e) {
+                e.preventDefault();
+                showPage('cartPage');
+                renderCart();
+            });
+            
+            $('.navbar-brand').on('click', function(e) {
+                e.preventDefault();
+                if (currentUser) {
+                    showPage('productPage');
+                    renderProducts();
+                } else {
+                    showPage('homePage');
+                }
+            });
+            
+            // Authentication
+            $('#loginForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                const email = $('#loginEmail').val();
+                const password = $('#loginPassword').val();
+                
+                loginUser(email, password)
+                    .then(user => {
+                        currentUser = user;
+                        localStorage.setItem('currentUser', JSON.stringify(user));
+                        $('#userNameDisplay').text(user.name);
+                        $('#userInfo').show();
+                        $('#authButtons').hide();
+                        $('#productsNavItem, #cartNavItem').show();
+                        showAlert(translations[currentLanguage].alertLoginSuccess);
+                        showPage('productPage');
+                        renderProducts();
+                    })
+                    .catch(error => {
+                        console.error('Login error:', error);
+                        showAlert(translations[currentLanguage].alertLoginFailed, 'danger');
+                    });
+            });
+            
+            $('#registerForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                const name = $('#registerName').val();
+                const email = $('#registerEmail').val();
+                const password = $('#registerPassword').val();
+                const confirmPassword = $('#confirmPassword').val();
+                
+                if (password !== confirmPassword) {
+                    showAlert(translations[currentLanguage].alertPasswordMismatch, 'danger');
+                    return;
+                }
+                
+                registerUser(name, email, password)
+                    .then(() => {
+                        showAlert(translations[currentLanguage].alertRegisterSuccess);
+                        $('#registerForm')[0].reset();
+                        showPage('loginPage');
+                    })
+                    .catch(error => {
+                        console.error('Registration error:', error);
+                        showAlert(translations[currentLanguage].alertRegisterFailed, 'danger');
+                    });
+            });
+            
+            $('#logoutBtn').on('click', function() {
+                localStorage.removeItem('currentUser');
+                currentUser = null;
+                $('#userInfo').hide();
+                $('#authButtons').show();
+                $('#productsNavItem, #cartNavItem').hide();
+                showPage('homePage');
+            });
+            
+            // Products Management
+            $('#saveProductBtn').on('click', function() {
+                const productId = $('#productId').val();
+                const product = {
+                    title: $('#productTitle').val(),
+                    description: $('#productDescription').val(),
+                    price: parseFloat($('#productPrice').val()),
+                    image: $('#productImage').val()
+                };
+                
+                if (productId) {
+                    // Update existing product
+                    updateProduct(productId, product)
+                        .then(() => {
+                            $('#addProductModal').modal('hide');
+                            showAlert(translations[currentLanguage].alertProductUpdated);
+                            renderProducts();
+                        })
+                        .catch(error => {
+                            console.error('Update product error:', error);
+                            showAlert('Failed to update product', 'danger');
+                        });
+                } else {
+                    // Add new product
+                    addProduct(product)
+                        .then(() => {
+                            $('#addProductModal').modal('hide');
+                            showAlert(translations[currentLanguage].alertProductAdded);
+                            renderProducts();
+                        })
+                        .catch(error => {
+                            console.error('Add product error:', error);
+                            showAlert('Failed to add product', 'danger');
+                        });
+                }
+            });
+            
+            // Reset form when modal is opened
+            $('#addProductModal').on('show.bs.modal', function (e) {
+                const button = $(e.relatedTarget);
+                const isEdit = button.hasClass('edit-product');
+                
+                if (isEdit) {
+                    const productId = button.data('id');
+                    const product = productsData.find(p => p.id === productId);
+                    
+                    $('#productModalTitle').text(translations[currentLanguage].modalEditProduct);
+                    $('#productId').val(product.id);
+                    $('#productTitle').val(product.title);
+                    $('#productDescription').val(product.description);
+                    $('#productPrice').val(product.price);
+                    $('#productImage').val(product.image);
+                } else {
+                    $('#productModalTitle').text(translations[currentLanguage].modalAddProduct);
+                    $('#productForm')[0].reset();
+                    $('#productId').val('');
+                }
+            });
+            
+            // Delete product
+            $(document).on('click', '.delete-product', function() {
+                productToDeleteId = $(this).data('id');
+                $('#deleteModal').modal('show');
+            });
+            
+            $('#confirmDeleteBtn').on('click', function() {
+                if (productToDeleteId) {
+                    deleteProduct(productToDeleteId)
+                        .then(() => {
+                            $('#deleteModal').modal('hide');
+                            showAlert(translations[currentLanguage].alertProductDeleted);
+                            renderProducts();
+                        })
+                        .catch(error => {
+                            console.error('Delete product error:', error);
+                            showAlert('Failed to delete product', 'danger');
+                        });
+                }
+            });
+            
+            // Add to cart
+            $(document).on('click', '.add-to-cart', function() {
+                const productId = $(this).data('id');
+                const product = productsData.find(p => p.id === productId);
+                
+                if (product) {
+                    addToCart(product);
+                    $(this).addClass('shake');
+                    setTimeout(() => {
+                        $(this).removeClass('shake');
+                    }, 500);
+                }
+            });
+            
+            // Cart interactions
+            $(document).on('click', '.remove-from-cart', function() {
+                const productId = $(this).data('id');
+                removeFromCart(productId);
+            });
+            
+            $(document).on('click', '.increase-quantity', function() {
+                const productId = $(this).data('id');
+                const input = $(`.quantity-input[data-id="${productId}"]`);
+                let value = parseInt(input.val()) || 1;
+                input.val(value + 1);
+                updateCartItemQuantity(productId, value + 1);
+            });
+            
+            $(document).on('click', '.decrease-quantity', function() {
+                const productId = $(this).data('id');
+                const input = $(`.quantity-input[data-id="${productId}"]`);
+                let value = parseInt(input.val()) || 1;
+                if (value > 1) {
+                    input.val(value - 1);
+                    updateCartItemQuantity(productId, value - 1);
+                }
+            });
+            
+            $(document).on('change', '.quantity-input', function() {
+                const productId = $(this).data('id');
+                let value = parseInt($(this).val()) || 1;
+                if (value < 1) {
+                    value = 1;
+                    $(this).val(1);
+                }
+                updateCartItemQuantity(productId, value);
+            });
+            
+            // Checkout
+            $('#checkoutBtn').on('click', function() {
+                if (getCart().length > 0) {
+                    localStorage.removeItem('cart');
+                    updateCartCount();
+                    renderCart();
+                    showAlert(translations[currentLanguage].alertCheckout, 'success');
+                }
+            });
+            
+            // Dark mode toggle
+            $('#darkModeSwitch').on('change', function() {
+                if ($(this).is(':checked')) {
+                    document.body.classList.add('dark-mode');
+                    localStorage.setItem('darkMode', 'true');
+                } else {
+                    document.body.classList.remove('dark-mode');
+                    localStorage.setItem('darkMode', 'false');
+                }
+            });
+            
+            // Language selector
+            $('.language-selector').on('click', function(e) {
+                e.preventDefault();
+                const lang = $(this).data('lang');
+                applyTranslations(lang);
+                
+                // Rerender current page to apply translations
+                if ($('#productPage').is(':visible')) {
+                    renderProducts();
+                } else if ($('#cartPage').is(':visible')) {
+                    renderCart();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
